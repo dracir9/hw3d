@@ -18,14 +18,38 @@
 *	along with The Chili Direct3D Engine.  If not, see <http://www.gnu.org/licenses/>.    *
 ******************************************************************************************/
 #pragma once
-#include <unordered_map>
-#include <Windows.h>
+#include "ChiliWin.h"
 
-class WindowsMessageMap
+
+class Window
 {
-public:
-	WindowsMessageMap();
-	std::string operator()( DWORD msg,LPARAM lp,WPARAM wp ) const;
 private:
-	std::unordered_map<DWORD,std::string> map;
+	// singleton manages registration/cleanup of window class
+	class WindowClass
+	{
+	public:
+		static const char* GetName() noexcept;
+		static HINSTANCE GetInstance() noexcept;
+	private:
+		WindowClass() noexcept;
+		~WindowClass();
+		WindowClass( const WindowClass& ) = delete;
+		WindowClass& operator=( const WindowClass& ) = delete;
+		static constexpr const char* wndClassName = "Chili Direct3D Engine Window";
+		static WindowClass wndClass;
+		HINSTANCE hInst;
+	};
+public:
+	Window( int width,int height,const char* name ) noexcept;
+	~Window();
+	Window( const Window& ) = delete;
+	Window& operator=( const Window& ) = delete;
+private:
+	static LRESULT CALLBACK HandleMsgSetup( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noexcept;
+	static LRESULT CALLBACK HandleMsgThunk( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noexcept;
+	LRESULT HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noexcept;
+private:
+	int width;
+	int height;
+	HWND hWnd;
 };

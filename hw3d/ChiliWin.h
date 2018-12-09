@@ -18,14 +18,48 @@
 *	along with The Chili Direct3D Engine.  If not, see <http://www.gnu.org/licenses/>.    *
 ******************************************************************************************/
 #pragma once
-#include <unordered_map>
-#include <Windows.h>
 
-class WindowsMessageMap
-{
-public:
-	WindowsMessageMap();
-	std::string operator()( DWORD msg,LPARAM lp,WPARAM wp ) const;
-private:
-	std::unordered_map<DWORD,std::string> map;
-};
+// target Windows 7 or later
+#define _WIN32_WINNT 0x0601
+#include <sdkddkver.h>
+// The following #defines disable a bunch of unused windows stuff. If you 
+// get weird errors when trying to do some windows stuff, try removing some
+// (or all) of these defines (it will increase build time though).
+#define WIN32_LEAN_AND_MEAN
+#define NOGDICAPMASKS
+#define NOSYSMETRICS
+#define NOMENUS
+#define NOICONS
+#define NOSYSCOMMANDS
+#define NORASTEROPS
+#define OEMRESOURCE
+#define NOATOM
+#define NOCLIPBOARD
+#define NOCOLOR
+#define NOCTLMGR
+#define NODRAWTEXT
+#define NOKERNEL
+#define NONLS
+#define NOMEMMGR
+#define NOMETAFILE
+#define NOMINMAX
+#define NOOPENFILE
+#define NOSCROLL
+#define NOSERVICE
+#define NOSOUND
+#define NOTEXTMETRIC
+#define NOWH
+#define NOCOMM
+#define NOKANJI
+#define NOHELP
+#define NOPROFILER
+#define NODEFERWINDOWPOS
+#define NOMCX
+#define NORPC
+#define NOPROXYSTUB
+#define NOIMAGE
+#define NOTAPE
+
+#define STRICT
+
+#include <Windows.h>
