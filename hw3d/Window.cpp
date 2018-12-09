@@ -61,7 +61,7 @@ HINSTANCE Window::WindowClass::GetInstance() noexcept
 
 
 // Window Stuff
-Window::Window( int width,int height,const char* name ) noexcept
+Window::Window( int width,int height,const char* name )
 {
 	// calculate window size based on desired client region size
 	RECT wr;
@@ -69,7 +69,10 @@ Window::Window( int width,int height,const char* name ) noexcept
 	wr.right = width + wr.left;
 	wr.top = 100;
 	wr.bottom = height + wr.top;
-	AdjustWindowRect( &wr,WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,FALSE );
+	if( FAILED( AdjustWindowRect( &wr,WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,FALSE ) ) )
+	{
+		throw CHWND_LAST_EXCEPT();
+	};
 	// create window & get hWnd
 	hWnd = CreateWindow(
 		WindowClass::GetName(),name,
@@ -77,6 +80,11 @@ Window::Window( int width,int height,const char* name ) noexcept
 		CW_USEDEFAULT,CW_USEDEFAULT,wr.right - wr.left,wr.bottom - wr.top,
 		nullptr,nullptr,WindowClass::GetInstance(),this
 	);
+	// check for error
+	if( hWnd == nullptr )
+	{
+		throw CHWND_LAST_EXCEPT();
+	}
 	// show window
 	ShowWindow( hWnd,SW_SHOWDEFAULT );
 }
@@ -86,7 +94,7 @@ Window::~Window()
 	DestroyWindow( hWnd );
 }
 
-LRESULT WINAPI Window::HandleMsgSetup( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noexcept
+LRESULT CALLBACK Window::HandleMsgSetup( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noexcept
 {
 	// use create parameter passed in from CreateWindow() to store window class pointer at WinAPI side
 	if( msg == WM_NCCREATE )
@@ -105,7 +113,7 @@ LRESULT WINAPI Window::HandleMsgSetup( HWND hWnd,UINT msg,WPARAM wParam,LPARAM l
 	return DefWindowProc( hWnd,msg,wParam,lParam );
 }
 
-LRESULT WINAPI Window::HandleMsgThunk( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noexcept
+LRESULT CALLBACK Window::HandleMsgThunk( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noexcept
 {
 	// retrieve ptr to window class
 	Window* const pWnd = reinterpret_cast<Window*>(GetWindowLongPtr( hWnd,GWLP_USERDATA ));
@@ -117,6 +125,8 @@ LRESULT Window::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noex
 {
 	switch( msg )
 	{
+	// we don't want the DefProc to handle this message because
+	// we want our destructor to destroy the window, so return 0 instead of break
 	case WM_CLOSE:
 		PostQuitMessage( 0 );
 		return 0;
@@ -151,20 +161,23 @@ const char* Window::Exception::GetType() const noexcept
 std::string Window::Exception::TranslateErrorCode(HRESULT hr) noexcept
 {
 	char* pMsgBuf = nullptr;
+	// windows will allocate memory for err string and make our pointer point to it
 	DWORD nMsgLen = FormatMessage(
 		FORMAT_MESSAGE_ALLOCATE_BUFFER |
 		FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 		nullptr, hr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 		reinterpret_cast<LPSTR>(&pMsgBuf), 0, nullptr
 	);
-	if (nMsgLen == 0)
+	// 0 string length returned indicates a failure
+	if( nMsgLen == 0 )
 	{
 		return "Unidentified error code";
 	}
+	// copy error string from windows-allocated buffer to std::string
 	std::string errorString = pMsgBuf;
-	LocalFree(pMsgBuf);
+	// free windows buffer
+	LocalFree( pMsgBuf );
 	return errorString;
-	return std::string();
 }
 
 HRESULT Window::Exception::GetErrorCode() const noexcept
