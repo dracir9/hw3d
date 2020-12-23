@@ -9,7 +9,7 @@ LRESULT CALLBACK WndProc( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam )
 	switch( msg )
 	{
 	case WM_CLOSE:
-		PostQuitMessage( 69 );
+		PostQuitMessage( 64 );
 		break;
 	}
 
@@ -22,7 +22,7 @@ int CALLBACK WinMain(
 	LPSTR     lpCmdLine,
 	int       nCmdShow )
 {
-	const auto pClassName = "hw3dbutts";
+	const auto pClassName = "hw3dWnd";
 	// register window class
 	WNDCLASSEX wc = { 0 };
 	wc.cbSize = sizeof( wc );
